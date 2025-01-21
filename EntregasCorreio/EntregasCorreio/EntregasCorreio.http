@@ -1,0 +1,6 @@
+@EntregasCorreio_HostAddress = http://localhost:5288
+
+GET {{EntregasCorreio_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
