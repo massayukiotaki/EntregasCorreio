@@ -44,7 +44,8 @@ namespace EntregasCorreio.Services
 
                 if (!modalidades.ContainsKey(modalidade))
                 {
-                    throw new ArgumentException("Modalidade inválida");
+                    //colocar o input do user
+                    throw new ArgumentException("Modalidade de envio inválida");
                 }
 
                 string coProduto = modalidades[modalidade];
@@ -54,14 +55,16 @@ namespace EntregasCorreio.Services
 
                 var precoResponse = await _httpClient.GetAsync(urlPreco);
                 precoResponse.EnsureSuccessStatusCode(); 
-                var precoData = JsonSerializer.Deserialize<JsonElement>(await precoResponse.Content.ReadAsStringAsync());
+                PrecoFrete precoFrete = JsonSerializer.Deserialize<PrecoFrete>(await precoResponse.Content.ReadAsStringAsync());
+                //criar uma classe FretePreco para tipar a resposta (fretepreco precoData = ...)
 
                 var prazoResponse = await _httpClient.GetAsync(urlPrazo);
                 prazoResponse.EnsureSuccessStatusCode(); 
-                var prazoData = JsonSerializer.Deserialize<JsonElement>(await prazoResponse.Content.ReadAsStringAsync());
+                PrazoFrete prazoFrete = JsonSerializer.Deserialize<PrazoFrete>(await prazoResponse.Content.ReadAsStringAsync());
+                //mesma coisa do precoData
 
-                var preco = precoData.GetProperty("pcFinal").GetString(); 
-                var prazo = prazoData.GetProperty("dataMaxima");  
+                var preco = precoFrete.GetProperty("pcFinal"); 
+                var prazo = prazoFrete.GetProperty("dataMaxima");  
 
                 var resultado = new
                 {
@@ -77,6 +80,9 @@ namespace EntregasCorreio.Services
             }
         }
     }
+    //log 
+    //permitir adicionar um valor em cima do preço
+    //permitir adicionar mais dias no prazo
 
 }
 
