@@ -53,26 +53,42 @@ namespace EntregasCorreio.Services
                 string urlPreco = $"https://api.correios.com.br/preco/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
                 string urlPrazo = $"https://api.correios.com.br/prazo/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
 
+                var optionsPreco = new JsonSerializerOptions
+                {
+                    Converters = { new PrecoFreteConverter() }
+                };
+
                 var precoResponse = await _httpClient.GetAsync(urlPreco);
-                precoResponse.EnsureSuccessStatusCode(); 
-                PrecoFrete precoFrete = JsonSerializer.Deserialize<PrecoFrete>(await precoResponse.Content.ReadAsStringAsync());
-                //criar uma classe FretePreco para tipar a resposta (fretepreco precoData = ...)
+                precoResponse.EnsureSuccessStatusCode();
+
+                string jsonPreco = await precoResponse.Content.ReadAsStringAsync();
+                var precoFrete = JsonSerializer.Deserialize<PrecoFrete>(jsonPreco, optionsPreco);
+
+                Console.WriteLine($"Preço Final: {precoFrete.PcFinal}");
+
+
+                var optionsPrazo = new JsonSerializerOptions
+                {
+                    Converters = { new PrazoFreteConverter() }
+                };
 
                 var prazoResponse = await _httpClient.GetAsync(urlPrazo);
-                prazoResponse.EnsureSuccessStatusCode(); 
-                PrazoFrete prazoFrete = JsonSerializer.Deserialize<PrazoFrete>(await prazoResponse.Content.ReadAsStringAsync());
-                //mesma coisa do precoData
+                prazoResponse.EnsureSuccessStatusCode();
 
-                var preco = precoFrete.GetProperty("pcFinal"); 
-                var prazo = prazoFrete.GetProperty("dataMaxima");  
+                string jsonPrazo = await prazoResponse.Content.ReadAsStringAsync();
+                var prazoFrete = JsonSerializer.Deserialize<PrazoFrete>(jsonPrazo, optionsPrazo);
 
+                Console.WriteLine($"Data Máxima: {prazoFrete.DataMaxEntrega}");
+
+                // Criando o resultado com os valores corretos
                 var resultado = new
                 {
-                    Preco = preco,
-                    Prazo = prazo
+                    Preco = precoFrete.PcFinal,
+                    Prazo = prazoFrete.DataMaxEntrega
                 };
 
                 return resultado;
+
             }
             catch (Exception ex)
             {
