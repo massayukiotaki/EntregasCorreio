@@ -1,19 +1,17 @@
 ﻿using EntregasCorreio.Models;
-using Microsoft.Extensions.Options;
-using System;
-using System.Text.Json;
 
 namespace EntregasCorreio.Services
+
 {
     public class FreteService
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _token; 
+        private readonly PrecoService _precoService;
+        private readonly PrazoService _prazoService;
 
-        public FreteService(HttpClient httpClient, string token)
+        public FreteService(PrecoService precoService, PrazoService prazoService)
         {
-            _httpClient = httpClient;
-            _token = token; 
+            _precoService = precoService;
+            _prazoService = prazoService;
         }
 
         public string FormatarCep(string cep)
@@ -31,90 +29,25 @@ namespace EntregasCorreio.Services
 
         public async Task<object> CalcularPrecoEPrazo(string cepOrigem, string cepDestino, double peso, string modalidade)
         {
-            try
+            var modalidades = new Dictionary<string, string>
             {
-                _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
-
-                var modalidades = new Dictionary<string, string>
-                {
-                    { "PAC", "03298" },
-                    { "SEDEX", "03140" },
-                };
-
-                if (!modalidades.ContainsKey(modalidade))
-                {
-                    //colocar o input do user
-                    throw new ArgumentException("Modalidade de envio inválida");
-                }
-
-                string coProduto = modalidades[modalidade];
-
-                PrecoFrete? precoFrete = await getPreco(cepOrigem, cepDestino, peso, coProduto);
-
-                PrazoFrete? prazoFrete = await getPrazo(cepOrigem, cepDestino, peso, coProduto);
-
-                // Criando o resultado com os valores corretos
-                var resultado = new
-                {
-                    Preco = precoFrete.PcFinal,
-                    Prazo = prazoFrete.DataMaxEntrega
-                };
-
-                return resultado;
-
-            }
-            catch (Exception ex)
-            {
-                return new { Erro = ex.Message };
-            }
-        }
-
-        private async Task<PrazoFrete?> getPrazo(string cepOrigem, string cepDestino, double peso, string coProduto)
-        {
-            var optionsPrazo = new JsonSerializerOptions
-            {
-                Converters = { new PrazoFreteConverter() }
+                { "PAC", "03298" },
+                { "SEDEX", "03140" },
             };
 
-            string urlPrazo = $"https://api.correios.com.br/prazo/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
+            if (!modalidades.ContainsKey(modalidade))
+                throw new ArgumentException("Modalidade de envio inválida");
 
+            string coProduto = modalidades[modalidade];
 
-            var prazoResponse = await _httpClient.GetAsync(urlPrazo);
-            prazoResponse.EnsureSuccessStatusCode();
+            PrecoFrete? precoFrete = await _precoService.ObterPreco(cepOrigem, cepDestino, peso, coProduto);
+            PrazoFrete? prazoFrete = await _prazoService.ObterPrazo(cepOrigem, cepDestino, peso, coProduto);
 
-            string jsonPrazo = await prazoResponse.Content.ReadAsStringAsync();
-            var prazoFrete = JsonSerializer.Deserialize<PrazoFrete>(jsonPrazo, optionsPrazo);
-
-            Console.WriteLine($"Data Máxima: {prazoFrete.DataMaxEntrega}");
-            return prazoFrete;
-        }
-
-        private async Task<PrecoFrete?> getPreco(string cepOrigem, string cepDestino, double peso, string coProduto)
-        {
-            string urlPreco = $"https://api.correios.com.br/preco/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
-
-            var optionsPreco = new JsonSerializerOptions
+            return new
             {
-                Converters = { new PrecoFreteConverter() }
+                Preco = precoFrete.PcFinal,
+                Prazo = prazoFrete.DataMaxEntrega
             };
-
-            var precoResponse = await _httpClient.GetAsync(urlPreco);
-            precoResponse.EnsureSuccessStatusCode();
-
-            string jsonPreco = await precoResponse.Content.ReadAsStringAsync();
-            var precoFrete = JsonSerializer.Deserialize<PrecoFrete>(jsonPreco, optionsPreco);
-
-            Console.WriteLine($"Preço Final: {precoFrete.PcFinal}");
-            return precoFrete;
         }
     }
-    //log 
-    //permitir adicionar um valor em cima do preço
-    //permitir adicionar mais dias no prazo
-
-    //separar prazo e preco em dois metodos
-
 }
-
-
