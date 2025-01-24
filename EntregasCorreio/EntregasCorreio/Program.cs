@@ -13,6 +13,10 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<FreteService>();
 
+builder.Services.AddHttpClient<PrazoService>();
+builder.Services.AddHttpClient<FreteService>();
+
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
