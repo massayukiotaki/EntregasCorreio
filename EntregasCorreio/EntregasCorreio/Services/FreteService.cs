@@ -7,26 +7,25 @@ namespace EntregasCorreio.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _token;
-        private readonly PrazoService _prazoService; // Dependência para PrazoService
+        private readonly PrazoService _prazoService;
+        private readonly PrecoService _precoService;
 
-        public FreteService(HttpClient httpClient, string token, PrazoService prazoService)
+        public FreteService(HttpClient httpClient, string token, PrazoService prazoService, PrecoService precoService)
         {
             _httpClient = httpClient;
             _token = token;
-            _prazoService = prazoService; // Inicializando PrazoService
+            _prazoService = prazoService;
+            _precoService = precoService;
         }
 
-        public string FormatarCep(string cep)
+        public Dictionary<string, string> ObterModalidades()
         {
-            if (string.IsNullOrWhiteSpace(cep))
-                throw new ArgumentException("O CEP não pode ser vazio ou nulo.");
-
-            string cepFormatado = new string(cep.Where(char.IsDigit).ToArray());
-
-            if (cepFormatado.Length != 8)
-                throw new ArgumentException("O CEP deve conter exatamente 8 dígitos.");
-
-            return cepFormatado;
+            var modalidades = new Dictionary<string, string>
+        {
+            { "PAC", "03298" },
+            { "SEDEX", "03140" },
+        };
+            return modalidades;
         }
 
         public async Task<object> CalcularPrecoEPrazo(string cepOrigem, string cepDestino, double peso, string modalidade)
@@ -36,11 +35,7 @@ namespace EntregasCorreio.Services
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
 
-                var modalidades = new Dictionary<string, string>
-                {
-                    { "PAC", "03298" },
-                    { "SEDEX", "03140" },
-                };
+                var modalidades = ObterModalidades();
 
                 if (!modalidades.ContainsKey(modalidade))
                 {
@@ -49,10 +44,9 @@ namespace EntregasCorreio.Services
 
                 string coProduto = modalidades[modalidade];
 
-                PrecoFrete? precoFrete = await getPreco(cepOrigem, cepDestino, peso, coProduto);
-                PrazoFrete? prazoFrete = await _prazoService.CalcularPrazo(cepOrigem, cepDestino, peso, coProduto); // Chama o método da PrazoService
+                PrecoFrete? precoFrete = await _precoService.CalcularPreco(cepOrigem, cepDestino, peso, coProduto);
+                PrazoFrete? prazoFrete = await _prazoService.CalcularPrazo(cepOrigem, cepDestino, peso, coProduto);
 
-                // Criando o resultado com os valores corretos
                 var resultado = new
                 {
                     Preco = precoFrete?.PcFinal,
@@ -67,23 +61,6 @@ namespace EntregasCorreio.Services
             }
         }
 
-        private async Task<PrecoFrete?> getPreco(string cepOrigem, string cepDestino, double peso, string coProduto)
-        {
-            string urlPreco = $"https://api.correios.com.br/preco/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
-
-            var optionsPreco = new JsonSerializerOptions
-            {
-                Converters = { new PrecoFreteConverter() }
-            };
-
-            var precoResponse = await _httpClient.GetAsync(urlPreco);
-            precoResponse.EnsureSuccessStatusCode();
-
-            string jsonPreco = await precoResponse.Content.ReadAsStringAsync();
-            var precoFrete = JsonSerializer.Deserialize<PrecoFrete>(jsonPreco, optionsPreco);
-
-            Console.WriteLine($"Preço Final: {precoFrete?.PcFinal}");
-            return precoFrete;
-        }
+        
     }
 }
