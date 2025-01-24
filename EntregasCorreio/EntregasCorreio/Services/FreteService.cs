@@ -33,7 +33,7 @@ namespace EntregasCorreio.Services
         {
             try
             {
-                _httpClient.DefaultRequestHeaders.Clear(); 
+                _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
 
                 var modalidades = new Dictionary<string, string>
@@ -50,35 +50,9 @@ namespace EntregasCorreio.Services
 
                 string coProduto = modalidades[modalidade];
 
-                string urlPreco = $"https://api.correios.com.br/preco/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
-                string urlPrazo = $"https://api.correios.com.br/prazo/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
+                PrecoFrete? precoFrete = await getPreco(cepOrigem, cepDestino, peso, coProduto);
 
-                var optionsPreco = new JsonSerializerOptions
-                {
-                    Converters = { new PrecoFreteConverter() }
-                };
-
-                var precoResponse = await _httpClient.GetAsync(urlPreco);
-                precoResponse.EnsureSuccessStatusCode();
-
-                string jsonPreco = await precoResponse.Content.ReadAsStringAsync();
-                var precoFrete = JsonSerializer.Deserialize<PrecoFrete>(jsonPreco, optionsPreco);
-
-                Console.WriteLine($"Preço Final: {precoFrete.PcFinal}");
-
-
-                var optionsPrazo = new JsonSerializerOptions
-                {
-                    Converters = { new PrazoFreteConverter() }
-                };
-
-                var prazoResponse = await _httpClient.GetAsync(urlPrazo);
-                prazoResponse.EnsureSuccessStatusCode();
-
-                string jsonPrazo = await prazoResponse.Content.ReadAsStringAsync();
-                var prazoFrete = JsonSerializer.Deserialize<PrazoFrete>(jsonPrazo, optionsPrazo);
-
-                Console.WriteLine($"Data Máxima: {prazoFrete.DataMaxEntrega}");
+                PrazoFrete? prazoFrete = await getPrazo(cepOrigem, cepDestino, peso, coProduto);
 
                 // Criando o resultado com os valores corretos
                 var resultado = new
@@ -95,10 +69,51 @@ namespace EntregasCorreio.Services
                 return new { Erro = ex.Message };
             }
         }
+
+        private async Task<PrazoFrete?> getPrazo(string cepOrigem, string cepDestino, double peso, string coProduto)
+        {
+            var optionsPrazo = new JsonSerializerOptions
+            {
+                Converters = { new PrazoFreteConverter() }
+            };
+
+            string urlPrazo = $"https://api.correios.com.br/prazo/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
+
+
+            var prazoResponse = await _httpClient.GetAsync(urlPrazo);
+            prazoResponse.EnsureSuccessStatusCode();
+
+            string jsonPrazo = await prazoResponse.Content.ReadAsStringAsync();
+            var prazoFrete = JsonSerializer.Deserialize<PrazoFrete>(jsonPrazo, optionsPrazo);
+
+            Console.WriteLine($"Data Máxima: {prazoFrete.DataMaxEntrega}");
+            return prazoFrete;
+        }
+
+        private async Task<PrecoFrete?> getPreco(string cepOrigem, string cepDestino, double peso, string coProduto)
+        {
+            string urlPreco = $"https://api.correios.com.br/preco/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
+
+            var optionsPreco = new JsonSerializerOptions
+            {
+                Converters = { new PrecoFreteConverter() }
+            };
+
+            var precoResponse = await _httpClient.GetAsync(urlPreco);
+            precoResponse.EnsureSuccessStatusCode();
+
+            string jsonPreco = await precoResponse.Content.ReadAsStringAsync();
+            var precoFrete = JsonSerializer.Deserialize<PrecoFrete>(jsonPreco, optionsPreco);
+
+            Console.WriteLine($"Preço Final: {precoFrete.PcFinal}");
+            return precoFrete;
+        }
     }
     //log 
     //permitir adicionar um valor em cima do preço
     //permitir adicionar mais dias no prazo
+
+    //separar prazo e preco em dois metodos
 
 }
 
