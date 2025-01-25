@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Swashbuckle.AspNetCore.Filters;
-
 namespace EntregasCorreio.Models
 {
 using Swashbuckle.AspNetCore.Filters;

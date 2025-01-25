@@ -1,8 +1,6 @@
-﻿using EntregasCorreio.Models;
-using EntregasCorreio.Services;
+﻿using EntregasCorreio.Services;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using Swashbuckle.AspNetCore.Filters;
 
 namespace EntregasCorreio.Controllers
 {

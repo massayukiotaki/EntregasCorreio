@@ -2,7 +2,6 @@ using System.Reflection;
 using EntregasCorreio.Controllers;
 using EntregasCorreio.Services;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore;
 using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
