@@ -43,11 +43,8 @@ namespace EntregasCorreio.Services
             PrecoFrete? precoFrete = await _precoService.ObterPreco(cepOrigem, cepDestino, peso, coProduto);
             PrazoFrete? prazoFrete = await _prazoService.ObterPrazo(cepOrigem, cepDestino, peso, coProduto);
 
-            return new
-            {
-                Preco = precoFrete.PcFinal,
-                Prazo = prazoFrete.DataMaxEntrega
-            };
+            return new CorreiosRateResponse(precoFrete.PcFinal,prazoFrete.DataMaxEntrega);
+
         }
     }
 }
