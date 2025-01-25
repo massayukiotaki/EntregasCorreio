@@ -1,5 +1,9 @@
-using EntregasCorreio.Models;
+using System.Reflection;
+using EntregasCorreio.Controllers;
 using EntregasCorreio.Services;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +23,36 @@ builder.Services.AddScoped<FreteService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "Entregas Correios",
+        Description = "Obtem preço e prazo de entregas via Correios de um objeto levando em conta seu peso, CEP de origem e CEP de destino utilizando uma modalidade de serviço especificada.",
+        TermsOfService = new Uri("https://example.com/terms"),
+        Contact = new OpenApiContact
+        {
+            Name = "Contato",
+            Url = new Uri("https://itlab.com.br/pages/pt/contato/")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Todos os direitos reservados",
+            Url = new Uri("https://itlab.com.br")
+        }
+    }
+    );
+
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+
+    options.ExampleFilters();
+});
+
+builder.Services.AddSwaggerExamplesFromAssemblyOf<FreteController>();
+
 
 var app = builder.Build();
 
