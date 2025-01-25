@@ -49,6 +49,7 @@ builder.Services.AddSwaggerGen(options =>
     options.IncludeXmlComments(xmlPath);
 
     options.ExampleFilters();
+    options.EnableAnnotations();
 });
 
 builder.Services.AddSwaggerExamplesFromAssemblyOf<FreteController>();
