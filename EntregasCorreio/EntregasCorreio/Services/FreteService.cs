@@ -1,4 +1,7 @@
 ﻿using EntregasCorreio.Models;
+using EntregasCorreio.Resources;
+using EntregasCorreio.Services;
+using System.Linq;
 
 namespace EntregasCorreio.Services
 
@@ -7,11 +10,13 @@ namespace EntregasCorreio.Services
     {
         private readonly PrecoService _precoService;
         private readonly PrazoService _prazoService;
+        private readonly FreteReader _freteReader;
 
-        public FreteService(PrecoService precoService, PrazoService prazoService)
+        public FreteService(PrecoService precoService, PrazoService prazoService, FreteReader freteReader)
         {
             _precoService = precoService;
             _prazoService = prazoService;
+            _freteReader = freteReader;
         }
 
         public string FormatarCep(string cep)
@@ -29,22 +34,23 @@ namespace EntregasCorreio.Services
 
         public async Task<object> CalcularPrecoEPrazo(string cepOrigem, string cepDestino, double peso, string modalidade)
         {
-            var modalidades = new Dictionary<string, string>
+            // Aguarda a conclusão da tarefa e obtém as modalidades
+            var modalidades = await _freteReader.ObterModalidades();
+
+            // Verifica se a modalidade fornecida está presente na lista de modalidades
+            if (!modalidades.Contains(modalidade, StringComparer.OrdinalIgnoreCase))
             {
-                { "PAC", "03298" },
-                { "SEDEX", "03140" },
-            };
+                throw new ArgumentException("Modalidade de envio inválida.");
+            }
 
-            if (!modalidades.ContainsKey(modalidade))
-                throw new ArgumentException("Modalidade de envio inválida");
+            string coProduto = modalidade; // Ajuste conforme necessário
 
-            string coProduto = modalidades[modalidade];
-
+            // Obtém o preço e o prazo do frete
             PrecoFrete? precoFrete = await _precoService.ObterPreco(cepOrigem, cepDestino, peso, coProduto);
             PrazoFrete? prazoFrete = await _prazoService.ObterPrazo(cepOrigem, cepDestino, peso, coProduto);
 
-            return new CorreiosRateResponse(precoFrete.PcFinal,prazoFrete.DataMaxEntrega);
-
+            // Retorna a resposta formatada
+            return new CorreiosRateResponse(precoFrete.PcFinal, prazoFrete.DataMaxEntrega);
         }
     }
 }

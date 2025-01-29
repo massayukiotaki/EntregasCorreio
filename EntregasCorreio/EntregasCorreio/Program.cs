@@ -2,6 +2,7 @@ using System.Reflection;
 using EntregasCorreio.Controllers;
 using EntregasCorreio.Services;
 using Microsoft.OpenApi.Models;
+using EntregasCorreio.Resources;
 using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<PrecoService>();
 builder.Services.AddScoped<PrazoService>();
 builder.Services.AddScoped<FreteService>();
+builder.Services.AddScoped<FreteReader>();
+
 
 
 builder.Services.AddControllers();
