@@ -27,6 +27,10 @@ namespace EntregasCorreio.Services
 
             var response = await _httpClient.GetAsync(urlPreco);
 
+            //corrigir a ordem do sucess
+            //faixa client de 400 a 499
+            //faixa server de 500 a 599
+
             if (response.StatusCode == HttpStatusCode.Forbidden)
                 throw new UnauthorizedAccessException("Acesso negado: verifique o token ou permissões.");
 

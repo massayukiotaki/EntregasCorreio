@@ -34,22 +34,21 @@ namespace EntregasCorreio.Services
 
         public async Task<object> CalcularPrecoEPrazo(string cepOrigem, string cepDestino, double peso, string modalidade)
         {
-            // Aguarda a conclusão da tarefa e obtém as modalidades
+
             var modalidades = await _freteReader.ObterModalidades();
 
-            // Verifica se a modalidade fornecida está presente na lista de modalidades
-            if (!modalidades.Contains(modalidade, StringComparer.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException("Modalidade de envio inválida.");
+            if (!modalidades.TryGetValue(modalidade, out string modalidadeCodigo)) 
+            { 
+                throw new ArgumentException($"Modalidade '{modalidade}' inválida. Opções válidas: {string.Join(", ", modalidades.Keys)}"); 
             }
 
-            string coProduto = modalidade; // Ajuste conforme necessário
+            string coProduto = modalidadeCodigo;
 
-            // Obtém o preço e o prazo do frete
+            Console.WriteLine($"Código da modalidade enviado para API: {coProduto}");
+
             PrecoFrete? precoFrete = await _precoService.ObterPreco(cepOrigem, cepDestino, peso, coProduto);
             PrazoFrete? prazoFrete = await _prazoService.ObterPrazo(cepOrigem, cepDestino, peso, coProduto);
 
-            // Retorna a resposta formatada
             return new CorreiosRateResponse(precoFrete.PcFinal, prazoFrete.DataMaxEntrega);
         }
     }

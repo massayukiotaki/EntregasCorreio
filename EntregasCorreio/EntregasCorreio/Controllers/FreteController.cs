@@ -42,7 +42,7 @@ namespace EntregasCorreio.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { Erro = ex.Message });
+                return BadRequest($"Erro ao calcular frete: {ex.GetType()} - {ex.Message} - {ex.StackTrace}");
             }
         }
 
