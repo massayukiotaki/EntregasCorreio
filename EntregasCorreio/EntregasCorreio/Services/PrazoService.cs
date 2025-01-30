@@ -6,18 +6,19 @@ namespace EntregasCorreio.Services
     public class PrazoService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _token;
 
-        public PrazoService(HttpClient httpClient, string token)
+        public PrazoService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _token = token;
         }
 
         public async Task<PrazoFrete?> ObterPrazo(string cepOrigem, string cepDestino, double peso, string coProduto)
         {
+            DotNetEnv.Env.Load("./Environments/.env");
+            string token = DotNetEnv.Env.GetString("TOKEN");
+
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
             string urlPrazo = $"https://api.correios.com.br/prazo/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
 

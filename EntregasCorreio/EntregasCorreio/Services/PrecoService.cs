@@ -7,23 +7,23 @@ namespace EntregasCorreio.Services
     public class PrecoService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _token;
 
-        public PrecoService(HttpClient httpClient, string token)
+        public PrecoService(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _token = token;
         }
 
         public async Task<PrecoFrete?> ObterPreco(string cepOrigem, string cepDestino, double peso, string coProduto)
         {
+            DotNetEnv.Env.Load("./Environments/.env");
+            string token = DotNetEnv.Env.GetString("TOKEN");
+
             _httpClient.DefaultRequestHeaders.Clear();
-            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
 
             string urlPreco = $"https://api.correios.com.br/preco/v1/nacional/{coProduto}?cepOrigem={cepOrigem}&cepDestino={cepDestino}&psObjeto={peso}";
 
             Console.WriteLine($"Solicitando URL: {urlPreco}");
-            Console.WriteLine($"Token: Bearer {_token}");
 
             var response = await _httpClient.GetAsync(urlPreco);
 
