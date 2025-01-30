@@ -1,4 +1,5 @@
-﻿using EntregasCorreio.Services;
+﻿using EntregasCorreio.Resources;
+using EntregasCorreio.Services;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -10,10 +11,12 @@ namespace EntregasCorreio.Controllers
     public class FreteController : ControllerBase
     {
         private readonly FreteService _freteService;
+        private readonly ILogger<FreteReader> _logger;
 
-        public FreteController(FreteService freteService)
+        public FreteController(FreteService freteService, ILogger<FreteReader> logger)
         {
             _freteService = freteService;
+            _logger = logger;
         }
 
         /// <param name="cepOrigem">CEP de origem. Exemplo: 28625720</param>
@@ -35,13 +38,21 @@ namespace EntregasCorreio.Controllers
                 [FromQuery] double peso = 450,
                 [FromQuery] string modalidade = "PAC")
         {
+            _logger.LogInformation("Recebida solicitação para cálculo de frete. Origem: {CepOrigem}, Destino: {CepDestino}, Peso: {Peso}, Modalidade: {Modalidade}",
+                    cepOrigem, cepDestino, peso, modalidade);
+
             try
             {
+                _logger.LogInformation("Chamando FreteService para calcular preço e prazo...");
                 var resultado = await _freteService.CalcularPrecoEPrazo(cepOrigem, cepDestino, peso, modalidade);
+
+                _logger.LogInformation("Cálculo de frete concluído com sucesso. Resposta: {@Resultado}", resultado);
                 return Ok(resultado);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Erro ao calcular frete. Origem: {CepOrigem}, Destino: {CepDestino}, Peso: {Peso}, Modalidade: {Modalidade}",
+                        cepOrigem, cepDestino, peso, modalidade);
                 return BadRequest($"Erro ao calcular frete: {ex.GetType()} - {ex.Message} - {ex.StackTrace}");
             }
         }
